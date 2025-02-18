@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Редактирование профиля{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Редактирование профиля</h2>
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <!-- Личные данные -->
+                        <h4 class="mb-3">Личные данные</h4>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.first_name.label }}</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.last_name.label }}</label>
+                            {{ form.last_name }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Контактная информация -->
+                        <h4 class="mb-3">Контактная информация</h4>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.phone.label }}</label>
+                            {{ form.phone }}
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <!-- Фото профиля -->
+                        <h4 class="mb-3">Фото профиля</h4>
+                        <div class="mb-3">
+                            {% if profile.avatar %}
+                                <img src="{{ profile.avatar.url }}" alt="Current avatar" class="mb-2" style="max-width: 200px;">
+                            {% endif %}
+                            <label class="form-label">{{ form.avatar.label }}</label>
+                            {{ form.avatar }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Дата рождения -->
+                        <h4 class="mb-3">Дополнительно</h4>
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.birth_date.label }}</label>
+                            {{ form.birth_date }}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    <a href="{% url 'lk' %}" class="btn btn-secondary">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

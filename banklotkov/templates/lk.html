@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Личный кабинет{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Левая колонка с информацией профиля -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Профиль</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if profile.avatar %}
+                        <img src="{{ profile.avatar.url }}" alt="Avatar" class="rounded-circle img-fluid mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/150" alt="Default Avatar" class="rounded-circle img-fluid mb-3">
+                    {% endif %}
+                    <h4>{{ profile.user.get_full_name|default:profile.user.username }}</h4>
+                    <p class="text-muted">
+                        {% if profile.phone %}
+                            <i class="fas fa-phone"></i> {{ profile.phone }}<br>
+                        {% endif %}
+                        <i class="fas fa-envelope"></i> {{ profile.user.email }}
+                    </p>
+                    <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">Редактировать профиль</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка с транзакциями и кредитами -->
+        <div class="col-md-8">
+            <!-- Активные кредиты -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Активные кредиты</h5>
+                    <a href="{% url 'new_loan' %}" class="btn btn-light btn-sm">Новый кредит</a>
+                </div>
+                <div class="card-body">
+                    {% if active_loans %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Сумма</th>
+                                        <th>Срок</th>
+                                        <th>Остаток</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for loan in active_loans %}
+                                    <tr>
+                                        <td>{{ loan.amount }}</td>
+                                        <td>{{ loan.term }} дней</td>
+                                        <td>{{ loan.remaining_amount }}</td>
+                                        <td>
+                                            <span class="badge bg-success">Активный</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">У вас нет активных кредитов</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Последние транзакции -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Последние транзакции</h5>
+                    <a href="{% url 'transaction_history' %}" class="btn btn-light btn-sm">Все транзакции</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Тип</th>
+                                        <th>Сумма</th>
+                                        <th>Дата</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in recent_transactions %}
+                                    <tr>
+                                        <td>{{ transaction.get_transaction_type_display }}</td>
+                                        <td>{{ transaction.amount }}</td>
+                                        <td>{{ transaction.created_at|date:"d.m.Y H:i" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted">У вас нет недавних транзакций</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно пополнения баланса -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Управление балансом</h5>
+    </div>
+    <div class="card-body">
+        <h3 class="text-center mb-3">{{ profile.balance }} лотков</h3>
+        <form method="post" action="{% url 'balance_request' %}" class="mb-3">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="number" name="amount" class="form-control" placeholder="Сумма пополнения" min="1" required>
+                <button class="btn btn-primary" type="submit">Пополнить</button>
+            </div>
+        </form>
+        <div class="d-grid">
+            <a href="{% url 'transaction_history' %}" class="btn btn-outline-secondary">История транзакций</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

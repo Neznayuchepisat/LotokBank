@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'product_list' %}">Каталог</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="card-title">{{ product.name }}</h2>
+                    <img src="https://cdn-icons-png.flaticon.com/512/1170/1170679.png" alt="{{ product.name }}" class="img-fluid mb-3">
+                    <div class="product-description">
+                        {{ product.description|linebreaks }}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <h4 class="text-primary mb-0">{{ product.price }} лотков</h4>
+                        {% if product.amount > 0 %}
+                            <span class="badge bg-success">В наличии</span>
+                        {% else %}
+                            <span class="badge bg-danger">Нет в наличии</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        {% if product.amount > 0 %}
+                            <form action="{% url 'purchase_product' product.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-lg w-100 mb-3">
+                                    <i class="fas fa-shopping-cart"></i> Купить
+                                </button>
+                            </form>
+                        {% endif %}
+                        <a href="{% url 'add_review' product.id %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-comment"></i> Написать отзыв
+                        </a>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <a href="{% url 'login' %}">Войдите</a> или <a href="{% url 'signup' %}">зарегистрируйтесь</a> чтобы совершить покупку или оставить отзыв
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Отзывы -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h3 class="mb-0">Отзывы</h3>
+        </div>
+        <div class="card-body">
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="review-card mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            {% if review.author.avatar %}
+                                <img src="{{ review.author.avatar.url }}" alt="Avatar" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <img src="https://via.placeholder.com/40" alt="Default Avatar" class="rounded-circle me-2">
+                            {% endif %}
+                            <div>
+                                <h5 class="mb-0">{{ review.author.user.username }}</h5>
+                                <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            <div class="ms-auto">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="mb-0">{{ review.text }}</p>
+                    </div>
+                    {% if not forloop.last %}
+                        <hr>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-muted">Отзывов пока нет. Будьте первым!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
