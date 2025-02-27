@@ -3,9 +3,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.paginator import Paginator
+from django.contrib import messages
+from django.db import transaction
+
 from .forms import SignUpForm, LoginForm, BalanceRequestForm, LoanForm, ProfileEditForm, ReviewForm, ProductForm
 from .models import Profile, Product, Transaction, Loan, Review
-from django.contrib import messages
 
 
 class CustomLoginView(LoginView):
@@ -148,14 +150,37 @@ def purchase_product(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     profile = Profile.objects.get(user=request.user)
 
-    if profile.balance >= product.price:
-        profile.balance -= product.price
-        profile.save()
-        Transaction.objects.create(sender=profile, recipient=None, amount=product.price, transaction_type='purchase')
-        return redirect('product_list')
-    else:
+    if product.amount <= 0:
+        messages.error(request, message='АШЫПГА101: КОГОТО ФИГО ОН ПРАПОЛ')
         return redirect('product_detail', product_id=product_id)
     
+    if profile.balance < product.price:
+        messages.error(request, message='Ашыпга (никокоя): до он праста биз апридиленнава миста шитильстьва')
+        return redirect('product_detail', product_id=product_id)
+
+    with transaction.atomic():
+        product = Product.objects.select_for_update().get(pk=product_id)
+        if product.amount <= 0:
+            messages.error(request, message='АШЫПГА101: КОГОТО ФИГО ОН ПРАПОЛ ПОКА ПОКУПАЛ')
+            return redirect('product_detail', product_id=product_id)
+        
+        profile.balance -= product.price
+        profile.save()
+
+        Transaction.objects.create(
+            sender=profile, 
+            recipient=None, 
+            amount=product.price, 
+            transaction_type='purchase'
+        )
+
+        product.amount -= 1
+        product.save()
+
+    messages.success(request, f'П0ЗДРАВЛЯЕМ С П)КУПК)Й {profile.user.username}')
+    return redirect('product_list')
+
+
 @login_required(login_url='login')
 def add_product_view(request):
     if request.method == 'POST':

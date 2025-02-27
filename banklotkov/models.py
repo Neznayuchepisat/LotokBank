@@ -32,6 +32,7 @@ class Product(models.Model):
 
 class Transaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
+        ('purchase', 'Purchase')
         ('transfer', 'Transfer'),
         ('credit', 'Credit'),
         ('tax', 'Tax'),
@@ -92,3 +93,4 @@ class Loan(models.Model):
 
     def __str__(self):
         return f"Loan for {self.borrower.user.username}: {self.amount}"
+    
