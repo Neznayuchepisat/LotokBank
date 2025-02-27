@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.paginator import Paginator
 from django.contrib import messages
+from django.db.models import Q
 from django.db import transaction
 
 from .forms import SignUpForm, LoginForm, BalanceRequestForm, LoanForm, ProfileEditForm, ReviewForm, ProductForm
@@ -71,8 +72,11 @@ def balance_request(request):
 @login_required
 def transaction_history(request):
     profile = Profile.objects.get(user=request.user)
-    transactions = Transaction.objects.filter(sender=profile).order_by('-created_at')
-    paginator = Paginator(transactions, 10)  # 10 транзакций на страницу
+    transactions = Transaction.objects.filter(
+        Q(sender=profile) | Q(recipient=profile)
+    ).order_by('-created_at')
+
+    paginator = Paginator(transactions, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request, 'transaction_history.html', {'page_obj': page_obj})
@@ -97,7 +101,7 @@ def edit_profile(request):
     if request.method == 'POST':
         form = ProfileEditForm(request.POST, request.FILES, instance=profile, user=request.user)
         if form.is_valid():
-            form.save(commit=False)
+            form.save()
             messages.success(request, 'Профиль успешно обновлен.')
             return redirect('lk')
     else:

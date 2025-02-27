@@ -32,7 +32,7 @@ class Product(models.Model):
 
 class Transaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
-        ('purchase', 'Purchase')
+        ('purchase', 'Purchase'),
         ('transfer', 'Transfer'),
         ('credit', 'Credit'),
         ('tax', 'Tax'),
