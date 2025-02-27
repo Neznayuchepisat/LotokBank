@@ -3,9 +3,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.paginator import Paginator
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q
 from django.db import transaction
+from decimal import Decimal
 
 from .forms import SignUpForm, LoginForm, BalanceRequestForm, LoanForm, ProfileEditForm, ReviewForm, ProductForm
 from .models import Profile, Product, Transaction, Loan, Review
@@ -42,6 +44,19 @@ def logout_view(request):
     return redirect('login')
 
 
+def get_bank_profile():
+    bank_user, created = User.objects.get_or_create(
+        username='bank',
+        defaults={
+            'email': 'bank@local', 
+            'password': 'pbkdf2_sha256$180000$zv3'
+        }
+    )
+
+    bank_profile, created = Profile.objects.get_or_create(user=bank_user)
+    return bank_profile
+
+
 @login_required
 def lk_view(request):
     profile = Profile.objects.get(user=request.user)
@@ -54,6 +69,7 @@ def lk_view(request):
         'recent_transactions': recent_transactions,
     }
     return render(request, 'lk.html', context)
+
 
 @login_required
 def balance_request(request):
@@ -69,6 +85,7 @@ def balance_request(request):
         form = BalanceRequestForm()
     return render(request, 'balance_request.html', {'form': form})
 
+
 @login_required
 def transaction_history(request):
     profile = Profile.objects.get(user=request.user)
@@ -81,6 +98,7 @@ def transaction_history(request):
     page_obj = paginator.get_page(page_number)
     return render(request, 'transaction_history.html', {'page_obj': page_obj})
 
+
 @login_required
 def new_loan(request):
     if request.method == 'POST':
@@ -89,11 +107,46 @@ def new_loan(request):
             loan = form.save(commit=False)
             loan.borrower = Profile.objects.get(user=request.user)
             loan.save()
-            messages.success(request, 'Заявка на кредит успешно отправлена.')
+
+            bank_profile = get_bank_profile()
+
+            loan.borrower.balance += loan.amount;
+            loan.borrower.save()
+
+            Transaction.objects.create(
+                sender=bank_profile, 
+                recipient=loan.borrower, 
+                amount=loan.amount, 
+                transaction_type='loan'
+            )
+
+            messages.success(request, 'Кредит на 100 лет оформлен')
             return redirect('lk')
     else:
         form = LoanForm()
     return render(request, 'new_loan.html', {'form': form})
+
+
+@login_required
+def repay_loan(request, loan_id):
+    loan = get_object_or_404(Loan, pk=loan_id, borrower__user=request.user)
+    profile = loan.borrower
+    
+    if not loan.is_active:
+        messages.error(request, 'Этот кредит уже умер без еды.')
+        return redirect('lk')
+    
+    if request.method == 'POST':
+        amount_str = request.POST.get('amount')
+        try:
+            amount = Decimal(amount_str)
+        except:
+            messages.error(request, 'картошка для кредита должна быть с соусом')
+            return redirect('repay_loan', loan_id=loan_id)
+        
+        
+        
+
 
 @login_required
 def edit_profile(request):
@@ -107,6 +160,7 @@ def edit_profile(request):
     else:
         form = ProfileEditForm(instance=profile, user=request.user)
     return render(request, 'edit_profile.html', {'form': form, 'profile': profile})
+
 
 def thanks_view(request):
     return render(request, 'thanks.html')
@@ -148,6 +202,7 @@ def product_detail_view(request, product_id):
         'product': product, 
         'reviews': reviews
     })
+
 
 @login_required(login_url='login')
 def purchase_product(request, product_id):
