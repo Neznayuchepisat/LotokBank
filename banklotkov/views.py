@@ -48,7 +48,7 @@ def get_bank_profile():
     bank_user, created = User.objects.get_or_create(
         username='bank',
         defaults={
-            'email': 'bank@local', 
+            'email': 'bank@local',
             'password': 'pbkdf2_sha256$180000$zv3'
         }
     )
@@ -62,7 +62,7 @@ def lk_view(request):
     profile = Profile.objects.get(user=request.user)
     active_loans = Loan.objects.filter(borrower=profile, is_active=True)
     recent_transactions = Transaction.objects.filter(sender=profile).order_by('-created_at')[:5]
-    
+
     context = {
         'profile': profile,
         'active_loans': active_loans,
@@ -114,9 +114,9 @@ def new_loan(request):
             loan.borrower.save()
 
             Transaction.objects.create(
-                sender=bank_profile, 
-                recipient=loan.borrower, 
-                amount=loan.amount, 
+                sender=bank_profile,
+                recipient=loan.borrower,
+                amount=loan.amount,
                 transaction_type='loan'
             )
 
@@ -131,11 +131,11 @@ def new_loan(request):
 def repay_loan(request, loan_id):
     loan = get_object_or_404(Loan, pk=loan_id, borrower__user=request.user)
     profile = loan.borrower
-    
+
     if not loan.is_active:
         messages.error(request, 'Этот кредит уже умер без еды.')
         return redirect('lk')
-    
+
     if request.method == 'POST':
         amount_str = request.POST.get('amount')
         try:
@@ -143,9 +143,9 @@ def repay_loan(request, loan_id):
         except:
             messages.error(request, 'картошка для кредита должна быть с соусом')
             return redirect('repay_loan', loan_id=loan_id)
-        
-        
-        
+
+
+
 
 
 @login_required
@@ -172,7 +172,7 @@ def product_list_view(request):
 
     page_number = request.GET.get('page')
     products = paginator.get_page(page_number)
-    
+
     return render(request, 'product_list.html', {'products': products})
 
 
@@ -199,7 +199,7 @@ def product_detail_view(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     reviews = Review.objects.filter(product=product)
     return render(request, 'product_detail.html', {
-        'product': product, 
+        'product': product,
         'reviews': reviews
     })
 
@@ -212,7 +212,7 @@ def purchase_product(request, product_id):
     if product.amount <= 0:
         messages.error(request, message='АШЫПГА101: КОГОТО ФИГО ОН ПРАПОЛ')
         return redirect('product_detail', product_id=product_id)
-    
+
     if profile.balance < product.price:
         messages.error(request, message='Ашыпга (никокоя): до он праста биз апридиленнава миста шитильстьва')
         return redirect('product_detail', product_id=product_id)
@@ -222,14 +222,14 @@ def purchase_product(request, product_id):
         if product.amount <= 0:
             messages.error(request, message='АШЫПГА101: КОГОТО ФИГО ОН ПРАПОЛ ПОКА ПОКУПАЛ')
             return redirect('product_detail', product_id=product_id)
-        
+
         profile.balance -= product.price
         profile.save()
 
         Transaction.objects.create(
-            sender=profile, 
-            recipient=None, 
-            amount=product.price, 
+            sender=profile,
+            recipient=None,
+            amount=product.price,
             transaction_type='purchase'
         )
 

@@ -10,14 +10,14 @@ class Profile(models.Model):
     birth_date = models.DateField(blank=True, null=True)
 
     def __str__(self) -> str:
-        return f"{self.user.username}'s profile" 
-    
+        return f"{self.user.username}'s profile"
+
     def save(self, *args, **kwargs):
         # Если это новый профиль, создаем его
         if not self.pk and not self.avatar:
             self.avatar = None
         super(Profile, self).save(*args, **kwargs)
-    
+
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
@@ -25,7 +25,7 @@ class Product(models.Model):
     amount = models.IntegerField(default=0)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     availible = models.BooleanField(default=True)
-    
+
     def __str__(self) -> str:
         return self.name
 
@@ -45,22 +45,22 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self) -> str:
         sender_name = self.sender.user.username if self.sender else 'Bank'
         recipient_name = self.recipient.user.username if self.recipient else 'Bank'
         return f'[{self.created_at}] {sender_name} -> {recipient_name} : {self.amount}'
-    
+
 
 class Review(models.Model):
     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.CASCADE)
     author = models.ForeignKey(Profile, on_delete=models.CASCADE)
     text = models.TextField()
     rating = models.IntegerField(default=0)
-    
+
     def __str__(self) -> str:
         return f"Review by {self.author.user.username} on {self.product.name}"
-    
+
 
 class BalanceRequest(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -93,4 +93,3 @@ class Loan(models.Model):
 
     def __str__(self):
         return f"Loan for {self.borrower.user.username}: {self.amount}"
-    

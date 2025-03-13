@@ -20,11 +20,10 @@ from django.conf.urls.static import static
 from django.conf import settings
 
 from banklotkov.views import (
-    signup, lk_view, logout_view, CustomLoginView, thanks_view, 
+    signup, lk_view, logout_view, CustomLoginView, thanks_view,
     product_list_view, product_detail_view as pdv, home_page,
-    purchase_product, balance_request, transaction_history, 
-    new_loan, edit_profile, add_review, add_product_view,
-    re
+    purchase_product, balance_request, transaction_history,
+    new_loan, edit_profile, add_review, add_product_view
 )
 
 urlpatterns = [

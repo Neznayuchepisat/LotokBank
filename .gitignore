@@ -1,0 +1,4 @@
+analyze.py
+directory_tree_report.txt
+.venv
+*.pyc
