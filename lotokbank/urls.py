@@ -23,7 +23,8 @@ from banklotkov.views import (
     signup, lk_view, logout_view, CustomLoginView, thanks_view,
     product_list_view, product_detail_view as pdv, home_page,
     purchase_product, balance_request, transaction_history,
-    new_loan, edit_profile, add_review, add_product_view
+    new_loan, edit_profile, add_review, add_product_view,
+    repay_loan
 )
 
 urlpatterns = [
@@ -40,7 +41,7 @@ urlpatterns = [
     path('products/<int:product_id>/', pdv, name='product_detail'),
     path('products/<int:product_id>/add_review/', add_review, name='add_review'),
     path('products/<int:product_id>/purchase/', purchase_product, name='purchase_product'),
-    path('loan/<int:loan_id>/repay/', purchase_product, name='repay_loan'),
+    path('loan/<int:loan_id>/repay/', repay_loan, name='repay_loan'),
     path('balance-request/', balance_request, name='balance_request'),
     path('transaction-history/', transaction_history, name='transaction_history'),
     path('new-loan/', new_loan, name='new_loan'),

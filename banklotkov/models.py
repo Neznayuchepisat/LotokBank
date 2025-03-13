@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from decimal import Decimal
 
 
 class Profile(models.Model):
@@ -76,7 +77,7 @@ class Loan(models.Model):
     borrower = models.ForeignKey(Profile, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     term = models.IntegerField()  # срок кредита в днях
-    interest_rate = models.DecimalField(max_digits=5, decimal_places=2, default=5.0)
+    interest_rate = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('5.0'))
     total_amount_due = models.DecimalField(max_digits=10, decimal_places=2, default=0, editable=False)
     amount_repaid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)

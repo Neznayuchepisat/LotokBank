@@ -132,8 +132,11 @@ def repay_loan(request, loan_id):
     loan = get_object_or_404(Loan, pk=loan_id, borrower__user=request.user)
     profile = loan.borrower
 
+    loan = get_object_or_404(Loan, pk=loan_id, borrower__user=request.user)
+    profile = loan.borrower
+
     if not loan.is_active:
-        messages.error(request, 'Этот кредит уже умер без еды.')
+        messages.error(request, 'Этот кредит уже погашен (не активен).')
         return redirect('lk')
 
     if request.method == 'POST':
@@ -141,11 +144,49 @@ def repay_loan(request, loan_id):
         try:
             amount = Decimal(amount_str)
         except:
-            messages.error(request, 'картошка для кредита должна быть с соусом')
+            messages.error(request, 'Введите корректную сумму для погашения.')
+            return redirect('repay_loan', loan_id=loan_id)
+
+        if amount <= 0:
+            messages.error(request, 'Сумма погашения должна быть положительной.')
+            return redirect('repay_loan', loan_id=loan_id)
+
+        if profile.balance < amount:
+            messages.error(request, 'Недостаточно средств на балансе.')
             return redirect('repay_loan', loan_id=loan_id)
 
 
+        with transaction.atomic():
+            # ещё раз берём кредит с блокировкой
+            loan = Loan.objects.select_for_update().get(pk=loan_id)
+            if not loan.is_active:
+                messages.error(request, 'Этот кредит уже погашен другим запросом.')
+                return redirect('lk')
 
+            # Списать с пользователя
+            profile.balance -= amount
+            profile.save()
+
+            # Создать транзакцию типа repayment
+            Transaction.objects.create(
+                sender=profile,
+                recipient=get_bank_profile(),
+                amount=amount,
+                transaction_type='repayment'
+            )
+
+            # Обновляем информацию о кредите
+            loan.amount_repaid += amount
+            # Если остаток выплат меньше или равен нулю, делаем кредит неактивным
+            if loan.remaining_amount() <= 0:
+                loan.is_active = False
+            loan.save()
+
+        messages.success(request, f'Вы успешно погасили {amount} лотков по кредиту.')
+        return redirect('lk')
+
+    # Если метод GET, просто рендерим форму погашения (или перенаправляем)
+    return render(request, 'repay_loan.html', {'loan': loan})
 
 
 @login_required
